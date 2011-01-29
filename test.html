@@ -1,0 +1,71 @@
+<html>
+<head>
+<script type="text/javascript" src="./TF.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+function assertEquals(expect, real){
+	var _expect = expect.toString();
+	var _real = real.toString();
+	if(_expect == _real){
+		return "[OK] " + _real;
+	} else {
+		return "[ERROR] <b>" + _expect + "</b> expected, but result is <b>" + _real + "</b>";
+	}
+}
+
+function TFIf(env, args){
+	var cond = args[0];
+	var a = args[1];
+	var b = args[2];
+	return TitleFormatting.Eval(env, TitleFormatting.Eval(env,cond).success ? a : b);
+}
+
+function TFGreater(env, args){
+	var x = args[0];
+	var y = args[1];
+	return new TitleFormatting.Result("", (TitleFormatting.Eval(env,x) > TitleFormatting.Eval(env,y)));
+}
+
+function TFHtmlSpecialChars(env, args){
+	var src = TitleFormatting.Eval(env,args[0]);
+	var div = document.createElement("div");
+	var text = document.createTextNode(src.toString());
+	div.appendChild(text);
+	return new TitleFormatting.Result(div.innerHTML, src.success);
+}
+
+var env = {
+	func:{
+		"if": TFIf,
+		"greater": TFGreater,
+		"htmlSpecialChars":TFHtmlSpecialChars,
+		"h":TFHtmlSpecialChars
+	}
+	,
+	fields:{
+		"title":"TITLE"
+	}
+}
+
+var results = [];
+var test = function(expect, code){ results.push( assertEquals(expect, TitleFormatting(env, code )).replace(" ", " " + code + " ==> ") ); }
+
+test("hoge", "hoge" );
+test("true", "$if($greater(2,1),true,false)" );
+test("","[$if($greater(2,1),true,false)]" );
+test("false","$if(,true,false)" );
+test("hoge YYY","hoge $if($greater(2,1),$if(,XX,YYY),A)" );
+test("hoge YYYzzz","hoge $if($greater(2,1),$if(,XX,YYY)zzz,A)" );
+test("hoge YYY fuga","hoge $if($greater(2,1),$if(,XX,YYY),A) fuga" );
+test("TITLE","%title%" );
+test("TITLE","[%title%]" );
+test("","[%__title%]" );
+test("?","%__title%" );
+test("&lt;small&gt;TITLE&lt;/small&gt;", "[$h(<small>%title%</small>)]" ); // TITLE
+test("", "[$h(<small>%__title%</small>)]" ); // TITLE
+
+document.write(results.join("<br>"));
+document.close();
+</script>
+</body>
