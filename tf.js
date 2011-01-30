@@ -1,23 +1,52 @@
+/*
+
+	Usage:
+		1) Evaluate source code directly
+			e.g. TitleFormatting(environment, "aaa%title%bbb");
+
+		2) Parse source code, then execute object code
+			e.g. var ocode = TitleFormatting.Prepare("aaa%title%bbb");
+			     var result = TitleFormatting(environment, ocode);
+	
+	Environment object:
+		Environment object provides functions($~~) and fields(%~~%).
+		e.g. var env = {func:{"if":TFIf,"if2":TFIf2}, fields:{title:"TITLE"}};
+	
+	TitleFormatting Function:
+		TitleFormatting Function receives environment and list of arguments. Arguments are code object fragment.
+		TF Function should return TF Result object.
+		e.g. function TFGreater(env, args){
+			var x = args[0];
+			var y = args[1];
+			return new TitleFormatting.Result("", (TitleFormatting.Eval(env,x) > TitleFormatting.Eval(env,y)));
+		}
+	
+	TitleFormatting Result Object:
+		TitleFormatting Result Object is combination of string and boolean.
+		Boolean flag indicates field(%~~%) expansion successed or not.
+		[ ] operator returns "" if flag is false.
+
+*/
 var TitleFormatting = (function(){
 	// Title formatting Result object
 	var TFResult = function(str,success){
 		this.str = str;
 		this.success = success;
-		this.toString = function(){return str;};
 	}
+	TFResult.prototype.toString = function(){return this.str;};
 
 	// Title formatting Token objects
 	// TF Function eg. $if
 	var kTFFunc = function(name){
 		this.name = name;
-		this.toString = function(){return "#func " + this.name;};
 	}
+	kTFFunc.prototype.toString = function(){return "#func " + this.name;};
 
 	// TF Field eg. %isPlaying%
 	var kTFField = function(key){
 		this.key = key;
-		this.toString = function(){return "%" + key + "%";};
 	}
+	kTFField.prototype.toString = function(){return "%" + this.key + "%";};
 
 	var kTFComma = new Object();
 	kTFComma.toString = function(){return "#,";};
@@ -162,11 +191,19 @@ var TitleFormatting = (function(){
 		return new TFResult(result.join(""),success);
 	}
 	
-	var c = function(env,code){
-		return evalTF(env, makeTree(tokenize( code )));
+	var c = function(env, code){
+		if(code instanceof Array){
+			// if code is object code
+			return evalTF(env, code);
+		}else{
+			// if code is source code
+			return evalTF(env, makeTree(tokenize( code )));
+		}
 	}
 	
 	c.Eval = evalTF;
 	c.Result = TFResult;
+	c.Prepare = function(code) { return makeTree(tokenize(code)); };
+	
 	return c;
 })();
