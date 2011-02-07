@@ -64,6 +64,8 @@ test("", "$undefined");
 test("", "()");
 test("true", "$if($greater(2,1),true,false)" );
 test("","[$if($greater(2,1),true,false)]" );
+test("TITLE","$if($greater(2,1),[%title%],false)" );
+test("TITLE","$if($greater(1,2),,[%title%])" );
 test("false","$if(,true,false)" );
 test("hoge YYY","hoge $if($greater(2,1),$if(,XX,YYY),A)" );
 test("hoge YYYzzz","hoge $if($greater(2,1),$if(,XX,YYY)zzz,A)" );
