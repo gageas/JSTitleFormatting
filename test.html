@@ -22,9 +22,9 @@ function TFIf(env, args){
 }
 
 function TFGreater(env, args){
-	var x = args[0];
-	var y = args[1];
-	return new TitleFormatting.Result("", (TitleFormatting.Eval(env,x) > TitleFormatting.Eval(env,y)));
+	var x = TitleFormatting.Eval(env, args[0]);
+	var y = TitleFormatting.Eval(env, args[1]);
+	return new TitleFormatting.Result("", (x.str-0) > (y.str-0));
 }
 
 function TFHtmlSpecialChars(env, args){
@@ -49,9 +49,19 @@ var env = {
 }
 
 var results = [];
-var test = function(expect, code){ results.push( assertEquals(expect, TitleFormatting(env, code )).replace(" ", " " + code + " ==> ") ); }
+var test = function(expect, code){ 
+	var result = "[FAILED] ";
+	try{
+		result = assertEquals(expect, TitleFormatting(env,TitleFormatting.Prepare(code )));
+	}catch(e){}
+	results.push(result.replace(" ", " " + code + " ==> ") );
+}
 
 test("hoge", "hoge" );
+test("hoge,fuga", "hoge,fuga");
+test("[UNKNOWN FUNCTION undefined]", "$undefined()");
+test("", "$undefined");
+test("", "()");
 test("true", "$if($greater(2,1),true,false)" );
 test("","[$if($greater(2,1),true,false)]" );
 test("false","$if(,true,false)" );

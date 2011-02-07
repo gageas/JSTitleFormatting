@@ -96,6 +96,18 @@ var TitleFormatting = (function(){
 		return tokens;
 	}
 
+	var pushTextToken = function(current, token){
+		if(current.length==0){
+			current.push(token);
+		}else{
+			if(typeof(current[current.length-1]) == "string" || current[current.length-1] instanceof String){
+				current[current.length-1] += token;
+			}else{
+				if(current[current.length-1] == null)current.pop();
+				current.push(token);
+			}
+		}
+	}
 	var makeTree = function(tokens){
 		var tree = [];
 		tree.parent = null;
@@ -114,17 +126,22 @@ var TitleFormatting = (function(){
 			}else if(token == kTFOpen){
 				var block = [];
 				block.parent = current;
+				current.hasArgs = true;
 				current.push(block);
 				current = block;
 			}else if(token == kTFClose){
 				current = current.parent;
 				current = current.parent;
 			}else if(token == kTFComma){
-				current = current.parent;
-				var block = [];
-				block.parent = current;
-				current.push(block);
-				current = block;
+				if(current.parent && current.parent.func){
+					current = current.parent;
+					var block = [];
+					block.parent = current;
+					current.push(block);
+					current = block;
+				}else{
+					pushTextToken(current, ",");
+				}
 			}else if(token == kTFAnyOpen){
 				var block = [];
 				block.any = true;
@@ -135,16 +152,7 @@ var TitleFormatting = (function(){
 			}else if(token == kTFAnyClose){
 				current = current.parent;
 			}else{
-				if(current.length==0){
-					current.push(token);
-				}else{
-					if(typeof(current[current.length-1]) == "string" || current[current.length-1] instanceof String){
-						current[current.length-1] += token;
-					}else{
-						if(current[current.length-1] == null)current.pop();
-						current.push(token);
-					}
-				}
+				pushTextToken(current, token);
 			}
 		}
 		return tree;
@@ -154,14 +162,20 @@ var TitleFormatting = (function(){
 		var result = [];
 		var success = false;
 
+		// null
 		if(codeFragment == null)return new TFResult("",false);
+
+		// literal
 		if(typeof(codeFragment) == "string" || codeFragment instanceof String){
 			return new TFResult(codeFragment, false);
 		}
+
+		// result object
 		if(codeFragment instanceof TFResult){
 			return codeFragment;
 		}
 		
+		// field
 		if(codeFragment instanceof kTFField){
 			var val = env.fields[codeFragment.key];
 			if(val){
@@ -171,14 +185,16 @@ var TitleFormatting = (function(){
 			}
 		}
 
-		if(codeFragment.func) {
+		// codeFragment list
+		if(codeFragment.func) { // list of arguments (function call)
+			if(!codeFragment.hasArgs) return new TFResult("", false);
 			var func = env.func[codeFragment.func.name];
 			if(func){
 				var res = func(env, codeFragment);
 				success = success || res.success;
 				result.push(res);
 			}else{
-				alert("Undefined function: " + codeFragment.func.name);
+				result.push(new TFResult("[UNKNOWN FUNCTION " + codeFragment.func.name + "]", false));
 			}
 		} else {
 			for(var i=0,l=codeFragment.length;i<l;i++){
@@ -191,6 +207,7 @@ var TitleFormatting = (function(){
 		return new TFResult(result.join(""),success);
 	}
 	
+	// closure object
 	var c = function(env, code){
 		if(code instanceof Array){
 			// if code is object code
