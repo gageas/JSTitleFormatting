@@ -46,10 +46,14 @@ var env = {
 	fields:{
 		"title":"TITLE"
 	}
+	,
+	function_missing:function(name, env, codeFragment){
+		return new TitleFormatting.Result(name, false);
+	}
 }
 
 var results = [];
-var test = function(expect, code){ 
+var _test = function(env, expect, code){ 
 	var result = "[FAILED] ";
 	try{
 		result = assertEquals(expect, TitleFormatting(env,TitleFormatting.Prepare(code )));
@@ -57,9 +61,13 @@ var test = function(expect, code){
 	results.push(result.replace(" ", " " + code + " ==> ") );
 }
 
+var test = function(expect, code){ _test(env, expect, code); }
+var test2 = function(expect, code){ _test({func:env.func, fields:env.fields}, expect, code); }
+
 test("hoge", "hoge" );
 test("hoge,fuga", "hoge,fuga");
-test("[UNKNOWN FUNCTION undefined]", "$undefined()");
+test("undef", "$undef()");
+test2("[UNKNOWN FUNCTION undef]", "$undef()");
 test("", "$undefined");
 test("", "()");
 test("true", "$if($greater(2,1),true,false)" );

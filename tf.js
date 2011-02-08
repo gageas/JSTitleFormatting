@@ -188,13 +188,20 @@ var TitleFormatting = (function(){
 		// codeFragment list
 		if(codeFragment.func) { // list of arguments (function call)
 			if(!codeFragment.hasArgs) return new TFResult("", false);
-			var func = env.func[codeFragment.func.name];
+			var name = codeFragment.func.name;
+			var func = env.func[name];
 			if(func){
 				var res = func(env, codeFragment);
 				success = success || res.success;
 				result.push(res);
 			}else{
-				result.push(new TFResult("[UNKNOWN FUNCTION " + codeFragment.func.name + "]", false));
+				if(env.function_missing && env.function_missing instanceof Function){
+					var res = env.function_missing(name, env, codeFragment);
+					success = success || res.success;
+					result.push(res);
+				} else {
+					result.push(new TFResult("[UNKNOWN FUNCTION " + name + "]", false));
+				}
 			}
 		} else {
 			for(var i=0,l=codeFragment.length;i<l;i++){
