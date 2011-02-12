@@ -84,6 +84,8 @@ test("","[%__title%]" );
 test("?","%__title%" );
 test("&lt;small&gt;TITLE&lt;/small&gt;", "[$h(<small>%title%</small>)]" ); // TITLE
 test("", "[$h(<small>%__title%</small>)]" ); // TITLE
+test("foo'bar", "foo''bar" ); // foo'bar
+test("foobar", "fo'ob'ar" );
 
 document.write(results.join("<br>"));
 document.close();

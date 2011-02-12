@@ -67,12 +67,18 @@ var TitleFormatting = (function(){
 		var tokens = [];
 		var m = null;
 		while(src.length > 0){
-			if(m = src.match(/^\$[a-z]+/i)){
+			if(m = src.match(/^\$[a-z0-9]+/i)){
 				tokens.push(new kTFFunc(m[0].substr(1)));
 				src = src.replace(m[0],"");
-			} else if(m = src.match(/^\%([a-z_]+)\%/i)){
+			} else if(m = src.match(/^\%([a-z_ ]+)\%/i)){
 				tokens.push(new kTFField(m[1]));
 				src = src.replace(m[0],"");
+			} else if(src.match( /^''/ )){
+				tokens.push("'");
+				src = src.substr(2);
+			} else if(m = src.match( /^'([^']+)'/ )){
+				tokens.push(m[1]);
+				src = src.replace(m[0], "");
 			} else if(src.match( /^\(/ )){
 				tokens.push(kTFOpen);
 				src = src.substr(1);
